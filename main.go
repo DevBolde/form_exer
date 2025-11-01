@@ -7,13 +7,19 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"os"
-	"time"
+	"strings"
 
 	"github.com/rohanthewiz/rweb"
 )
 
 func main() {
+	// Defers do no fire on CTRL-C bc CTRL-C uses os.Exit() // immediate shutdown
+	defer func() {
+		fmt.Println("Bye")
+	}()
+
 	// Create a new rweb server instance with configuration options
 	s := rweb.NewServer(rweb.ServerOptions{
 		// Listen on port 8080 on all network interfaces
@@ -27,36 +33,67 @@ func main() {
 		Debug: false,
 	})
 
-	// Middleware 1: Request logging middleware
-	// This middleware logs each request's method, path, response status, and duration
-	// Middleware in rweb is executed in the order it's registered
-	s.Use(func(ctx rweb.Context) error {
-		// Record the start time of the request
-		start := time.Now()
+	s.Use(rweb.RequestInfo)
 
-		// defer ensures this runs after the request is handled
-		// This allows us to capture the final response status and calculate duration
-		defer func() {
-			// Log format: GET "/path" -> 200 [150ms]
-			fmt.Printf("%s %q -> %d [%s]\n",
-				ctx.Request().Method(),  // HTTP method (GET, POST, etc.)
-				ctx.Request().Path(),    // Request path
-				ctx.Response().Status(), // Response status code
-				time.Since(start)) // Request duration
-		}()
+	// type MidWare func(ctx rweb.Context) error
+	var authMidWare rweb.Handler
 
-		// Call ctx.Next() to pass control to the next middleware or handler
-		// This is crucial - without it, the request chain stops here
+	authMidWare = func(ctx rweb.Context) error {
+		fmt.Println("**-> Checking Auth...")
+
+		reqPath := ctx.Request().Path()
+		if strings.Contains(reqPath, "roh") {
+			fmt.Println("**-> Auth OK")
+			return ctx.Next()
+		}
+
+		ctx.Response().SetStatus(http.StatusUnauthorized) // 401
+		return nil
+	}
+
+	s.Use(authMidWare)
+
+	/*	// Middleware 1: Request logging middleware
+		// This middleware logs each request's method, path, response status, and duration
+		// Middleware in rweb is executed in the order it's registered
+		s.Use(func(ctx rweb.Context) error {
+			// Record the start time of the request
+			start := time.Now()
+
+			// defer ensures this runs after the request is handled
+			// This allows us to capture the final response status and calculate duration
+			defer func() {
+				// Log format: GET "/path" -> 200 [150ms]
+				fmt.Printf("In Midware 1 - %s %q -> %d [%s]\n",
+					ctx.Request().Method(),  // HTTP method (GET, POST, etc.)
+					ctx.Request().Path(),    // Request path
+					ctx.Response().Status(), // Response status code
+					time.Since(start))       // Request duration
+			}()
+
+			// Call ctx.Next() to pass control to the next middleware or handler
+			// This is crucial - without it, the request chain stops here
+			return ctx.Next()
+		})
+	*/
+
+	// We could put the middleware function definition in a variable like this
+	midWare2 := func(ctx rweb.Context) error {
+		fmt.Println("In MidWare 2: ", ctx.Request().Method(), ctx.Request().Path())
+		// Always call ctx.Next() unless you want to stop the request chain
 		return ctx.Next()
-	})
+	}
 
 	// Middleware 2: Simple demonstration middleware
 	// Shows that multiple middleware can be chained together
+	s.Use(midWare2)
+
 	s.Use(func(ctx rweb.Context) error {
-		fmt.Println("In Middleware 2")
-		// Always call ctx.Next() unless you want to stop the request chain
+		fmt.Println("In MidWare 3: ", ctx.Request().Host())
 		return ctx.Next()
 	})
+
+	// [master handler -> Lookup route]
 
 	// Route: Root endpoint
 	// Handles GET requests to "/"

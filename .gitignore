@@ -1,5 +1,5 @@
-./idea
-./zed
-./vscode
+.idea/
+.zed/
+.vscode/
 
 form_exer
