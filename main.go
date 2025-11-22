@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	// Defers do no fire on CTRL-C bc CTRL-C uses os.Exit() // immediate shutdown
+	// Defers does not fire on CTRL-C bc CTRL-C uses os.Exit() // immediate shutdown
 	defer func() {
 		fmt.Println("Bye")
 	}()
@@ -61,7 +61,7 @@ func main() {
 	// type MidWare func(ctx rweb.Context) error
 	// var authMidWare rweb.Handler
 
-	authMidWare := func(ctx rweb.Context) error {
+	_ = func(ctx rweb.Context) error {
 		fmt.Println("**-> Checking Auth...")
 
 		reqPath := ctx.Request().Path()
@@ -74,7 +74,7 @@ func main() {
 		return nil
 	}
 
-	s.Use(authMidWare)
+	// s.Use(authMidWare)
 
 	// We could put the middleware function definition in a variable like this
 	midWare2 := func(ctx rweb.Context) error {
@@ -104,6 +104,13 @@ func main() {
 		return ctx.WriteString("Welcome\n")
 	})
 
+	s.Get("/roh", func(ctx rweb.Context) error {
+		ctx.Response().SetHeader("Content-Type", "text/plain; charset=utf-8")
+
+		// WriteString sends a plain text response
+		return ctx.WriteString("Welcome to Roh!\n")
+	})
+
 	// Route parameters demonstration
 	// The radix tree router correctly distinguishes between parameterized and static routes
 	// Test with: curl http://localhost:8080/greet/John
@@ -115,12 +122,15 @@ func main() {
 
 	// POST request with route parameter
 	// Demonstrates that route parameters work with all HTTP methods
-	// Test with: curl -X POST http://localhost:8080/post-form-data/123
+	// Test with: curl -X POST http://localhost:8080/post-form-data/123 -d "dept=engineering&name=JohnDoe"
 	s.Post("/post-form-data/:form_id",
 		func(ctx rweb.Context) error {
-			dept := ctx.Request().FormValue("dept")
-			return ctx.WriteString("Posted - form_id: " + ctx.Request().PathParam("form_id") +
-				", dept: " + dept + ", name:" + ctx.Request().FormValue("name"))
+			dept := ctx.Request().FormValue("dept")      // form data "dept=engineering"
+			formId := ctx.Request().PathParam("form_id") // route/path parameter "123"
+			name := ctx.Request().FormValue("name")      // form data "name=JohnDoe"
+			outStr := fmt.Sprintf("Posted - form_id: %s, dept: %s, name: %s", formId, dept, name)
+
+			return ctx.WriteString(outStr)
 		})
 
 	// Example 3: Serve .well-known files (for SSL certificates, etc.)
