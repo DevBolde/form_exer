@@ -3,25 +3,30 @@ package pages
 import "github.com/rohanthewiz/element"
 
 // Home Page component
-type Home struct{}
+type Home struct {
+	Heading string
+}
 
 func (h Home) Render() (out string) {
 	b := element.NewBuilder()
 
-	var contactForm = ContactForm{}
-
 	b.Body("style", "background-color:tan").R(
-		b.H1("style", "color:maroon;background-color:#dfc673").T("Welcome"),
-		contactForm.Render(b),
+		b.H1("style", "color:maroon;background-color:#dfc673").T(h.Heading),
+
+		element.RenderComponents(b, ContactForm{}, Footer{}),
+		// ContactForm{}.Render(b), Footer{}.Render(b),
 	)
+
+	// ...
 
 	return b.String()
 }
 
 // ContactForm component renders a contact form using element package
+// TODO: Put contact form and footer logic in separate files
 type ContactForm struct{}
 
-func (c ContactForm) Render(b *element.Builder) string {
+func (c ContactForm) Render(b *element.Builder) (dontCare any) {
 	// Build the contact form with proper attributes and structure
 	b.Form("action", "/contact", "method", "POST").R(
 		b.Input("type", "text", "name", "name", "placeholder", "Name"),
@@ -30,5 +35,14 @@ func (c ContactForm) Render(b *element.Builder) string {
 		b.Button("type", "submit").T("Send"),
 	)
 
-	return b.String()
+	return
+}
+
+type Footer struct{}
+
+func (f Footer) Render(b *element.Builder) (dontCare any) {
+	b.Div("style", "background-color:lightgray").R(
+		b.P("style", "color:gray").T("Copyright &copy; 2025"),
+	)
+	return
 }

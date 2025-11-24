@@ -1,3 +1,3 @@
 package pages
 
-var HomePage = Home{}
+var HomePage = Home{Heading: "Home Page"}

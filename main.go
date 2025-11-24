@@ -19,7 +19,7 @@ import (
 func main() {
 	// Defers does not fire on CTRL-C bc CTRL-C uses os.Exit() // immediate shutdown
 	defer func() {
-		fmt.Println("Bye")
+		fmt.Println("Exiting main()...")
 	}()
 
 	// Create a new rweb server instance with configuration options
@@ -78,21 +78,23 @@ func main() {
 
 	// s.Use(authMidWare)
 
-	// We could put the middleware function definition in a variable like this
-	midWare2 := func(ctx rweb.Context) error {
-		fmt.Println("In MidWare 2: ", ctx.Request().Method(), ctx.Request().Path())
-		// Always call ctx.Next() unless you want to stop the request chain
-		return ctx.Next()
-	}
+	/*	// We could put the middleware function definition in a variable like this
+		midWare2 := func(ctx rweb.Context) error {
+			fmt.Println("In MidWare 2: ", ctx.Request().Method(), ctx.Request().Path())
+			// Always call ctx.Next() unless you want to stop the request chain
+			return ctx.Next()
+		}
 
-	// Middleware 2: Simple demonstration middleware
-	// Shows that multiple middleware can be chained together
-	s.Use(midWare2)
+		// Middleware 2: Simple demonstration middleware
+		// Shows that multiple middleware can be chained together
+		s.Use(midWare2)
+	*/
 
-	s.Use(func(ctx rweb.Context) error {
-		fmt.Println("In MidWare 3: ", ctx.Request().Host())
-		return ctx.Next()
-	})
+	/*	s.Use(func(ctx rweb.Context) error {
+			fmt.Println("In MidWare 3: ", ctx.Request().Host())
+			return ctx.Next()
+		})
+	*/
 
 	// [master handler -> Lookup route]
 
@@ -104,21 +106,22 @@ func main() {
 		return ctx.WriteHTML(pages.HomePage.Render())
 	})
 
-	s.Get("/roh", func(ctx rweb.Context) error {
-		ctx.Response().SetHeader("Content-Type", "text/plain; charset=utf-8")
+	/*	s.Get("/roh", func(ctx rweb.Context) error {
+			ctx.Response().SetHeader("Content-Type", "text/plain; charset=utf-8")
 
-		// WriteString sends a plain text response
-		return ctx.WriteString("Welcome to Roh!\n")
-	})
+			// WriteString sends a plain text response
+			return ctx.WriteString("Welcome to Roh!\n")
+		})
 
-	// Route parameters demonstration
-	// The radix tree router correctly distinguishes between parameterized and static routes
-	// Test with: curl http://localhost:8080/greet/John
-	s.Get("/greet/:name", func(ctx rweb.Context) error {
-		// Access route parameters using ctx.Request().Param("paramName")
-		// The :name parameter captures any value in that URL segment
-		return ctx.WriteString("Hello " + ctx.Request().PathParam("name"))
-	})
+		// Route parameters demonstration
+		// The radix tree router correctly distinguishes between parameterized and static routes
+		// Test with: curl http://localhost:8080/greet/John
+		s.Get("/greet/:name", func(ctx rweb.Context) error {
+			// Access route parameters using ctx.Request().Param("paramName")
+			// The :name parameter captures any value in that URL segment
+			return ctx.WriteString("Hello " + ctx.Request().PathParam("name"))
+		})
+	*/
 
 	// POST request with route parameter
 	// Demonstrates that route parameters work with all HTTP methods
@@ -196,7 +199,7 @@ func main() {
 	// Start the HTTP server
 	// This blocks until the server is shut down
 	// log.Fatal ensures any startup errors are logged before exiting
-	log.Fatal(s.Run())
+	log.Println(s.Run())
 }
 
 // Outputs
